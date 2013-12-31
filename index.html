@@ -37,11 +37,11 @@ $(function() {
       // the view for the arena
       var ArenaView = Parse.View.extend({
       	events: {
-      	}
+      	},
       	el: '.content',
       	initialize: function() {
       		this.render();
-      	}
+      	},
       	render: function() {
 		this.$el.html(_.template($("#arena-template").html()));
       		this.delegateEvents();
@@ -123,7 +123,7 @@ $(function() {
       		this.render();
       	},
       	
-      	render: () {
+      	render: function() {
       		if (Parse.User.current()) {
       			new ArenaView();
       		} else {
