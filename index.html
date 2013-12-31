@@ -44,19 +44,41 @@ $(function() {
       	},
 		
 		startMatch: function doSomething(e) {
+			var self = this;
+
 			var targ;
 			if (!e) var e = window.event;
 			if (e.target) targ = e.target;
 			else if (e.srcElement) targ = e.srcElement;
 			if (targ.nodeType == 3) // defeat Safari bug
 				targ = targ.parentNode;
-			alert(targ.innerHTML);
+			
+			var Match = Parse.Object.extend('Match');
+			var newMatch = new Match();
+			newMatch.set('challenger',Parse.User.current());
+			newMatch.save();
+			
+			var query = new Parse.Query(Parse.User);
+			query.equalTo('username',targ.innerHTML);
+			query.find({
+				success:function(results){
+					newMatch.set('challenged',results[0]);
+					newMatch.save();
+					console.log(newMatch.get('challenger').get('username') + " has challenged " + newMatch.get('challenged').get('username') + " to a game of rock, paper, scissors");
+				}, error: function(error){
+					alert(error.message);
+				}
+				});
+			
+          		new ArenaView();
+          		self.undelegateEvents();
+          		delete self;
 		},
 		
 		getActivePlayers: function() {
 			var query = new Parse.Query(Parse.User);
 			query.equalTo('active',true);
-			query.notEqualTo('objectId',Parse.User.current().id);
+			//query.notEqualTo('objectId',Parse.User.current().id);
 			query.find({
 				success:function(results){
 					if (!results.length) {
