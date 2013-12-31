@@ -29,6 +29,27 @@ $(function() {
       Parse.initialize("0vOKQvmz86XkX5WdzPxYHqHE66zuWRq2YX5lsgSq",
                    "eyxUypnIPa2Km1MC8TQ4zhywRo9T2IPWZqaVPuHo");
       
+      // the view for a match
+      var MatchView = Parse.View.extend({
+      	events: {
+			'click button.go-back' : 'goBack',
+      	},
+      	
+      	el: $("#content"),
+      	
+      	initialize : function() {
+      		_.bindAll(this, 'goBack');
+      		this.render();
+      	},
+      	
+      	render: function() {
+      		var userStateQuery = new Parse.Query('Match');
+      		userStateQuery.equalTo('challenger',Parse.User.current());
+      		userStateQuery.equalTo('active',true);
+      		this.$el.html(_.template($("#match-template").html(),{challengerOrChallenger:userState}));
+      	}
+      });
+      
       // the view for the arena
       var ArenaView = Parse.View.extend({
       	events: {
@@ -69,8 +90,11 @@ $(function() {
 					alert(error.message);
 				}
 				});
+				
+			newMatch.set('active',true);
+			newMatch.save();
 			
-          		new ArenaView();
+          		new MatchView();
           		self.undelegateEvents();
           		delete self;
 		},
@@ -78,7 +102,7 @@ $(function() {
 		getActivePlayers: function() {
 			var query = new Parse.Query(Parse.User);
 			query.equalTo('active',true);
-			//query.notEqualTo('objectId',Parse.User.current().id);
+			query.notEqualTo('objectId',Parse.User.current().id);
 			query.find({
 				success:function(results){
 					if (!results.length) {
@@ -269,9 +293,19 @@ $(function() {
       </div>
     </script>
     
-    <script type="text/template" id="game-template">
-      <div class="game">
-      
+    <script type="text/template" id="match-template">
+      <div class="match">
+      	<div class="player-in-game" id="<%= challengerOrOhallenged %>">
+      		<header id="<%= challengerOrChallenged %>-name"><%= challengerOrChallenged %></header>
+      		<ul>
+      			<li><button class="attack" id="<%= challengerOrChallenged %>-rock">Rock</button></li>
+      			<li><button class="attack" id="<%= challengerOrChallenged %>-paper">Paper</button></li>
+      			<li><button class="attack" id="<%= challengerOrChallenged %>-scissors">Scissors</button></li>
+      		</ul>
+      	</div>
+      </div>
+      <div id="user-info">
+        Signed in as <%= Parse.User.current().get("username") %> (<a href="#" class="log-out">Log out</a>)
       </div>
     </script>
     
