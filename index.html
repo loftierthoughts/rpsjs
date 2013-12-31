@@ -28,23 +28,72 @@ $(function() {
       // Initialize Parse with your Parse application javascript keys
       Parse.initialize("0vOKQvmz86XkX5WdzPxYHqHE66zuWRq2YX5lsgSq",
                    "eyxUypnIPa2Km1MC8TQ4zhywRo9T2IPWZqaVPuHo");
-                   
-      var AppState = Parse.Object.extend("AppState", {
-    		defaults: {
-    		}
-        });
       
       // the view for the arena
       var ArenaView = Parse.View.extend({
       	events: {
+			'click a.log-out' : 'logOut'
       	},
-      	el: '.content',
-      	initialize: function() {
+      	
+		el: '.content',
+      	
+		initialize: function() {
+			_.bindAll(this, 'logOut','getActivePlayers');
       		this.render();
       	},
+		
+		getActivePlayers: function() {
+			var query = new Parse.Query(Parse.User);
+			query.equalTo('active',true);
+			query.notEqualTo('objectId',Parse.User.current().id);
+			query.find({
+				success:function(results){
+					if (!results.length) {
+					$('#player-list').html('<li>No other active users</li>');
+					} else {
+					console.log("Active user list:");
+      var playerListHTML = "<% _.each(activePlayersList,function(result){ %><li><button class='player-name'><%= result.get('username') %></button></li><% });%>";
+      $('#player-list').html(_.template(playerListHTML, {activePlayersList : results}));
+	  console.log(_.template(playerListHTML, {activePlayersList : results}));
+						for (var i = 0; i < results.length; i++) { 
+     						var object = results[i];
+      						console.log((i+1) + ') ' + object.id + ' - ' + object.get('username'));
+    					}
+					}
+					},
+				error:function(error){
+						console.log("Error " + error.code + " : " + error.message);
+				}
+			});
+		},
+		
+		// Logs out the user and shows the login view
+   		logOut: function(e) {
+			
+			Parse.User.current().set("active",false);
+			Parse.User.current().save();
+      		
+			Parse.User.logOut();
+      		
+			new LoginView();
+      		
+			this.undelegateEvents();
+			delete this;
+   		},
+		
       	render: function() {
-		this.$el.html(_.template($("#arena-template").html()));
-      		this.delegateEvents();
+			
+			if (!Parse.User.current().get("active"))
+			{
+				Parse.User.current().set("active",true);
+				Parse.User.current().save();
+			}
+			
+			this.$el.html(_.template($('#arena-template').html()));
+      		
+			this.delegateEvents();
+			
+			this.getActivePlayers();
       	}
       })
       
@@ -63,6 +112,7 @@ $(function() {
     },
 
     logIn: function(e) {
+	  e.preventDefault();
       var self = this;
       var username = this.$("#login-username").val();
       var password = this.$("#login-password").val();
@@ -76,36 +126,27 @@ $(function() {
 
         error: function(user, error) {
           self.$(".login-form .error").html("Invalid username or password. Please try again.").show();
-          this.$(".login-form button").removeAttr("disabled");
         }
       });
-
-      this.$(".login-form button").attr("disabled", "disabled");
-
-      return false;
     },
 
     signUp: function(e) {
+	  e.preventDefault();
       var self = this;
       var username = this.$("#signup-username").val();
       var password = this.$("#signup-password").val();
       
       Parse.User.signUp(username, password, { ACL: new Parse.ACL() }, {
         success: function(user) {
-          new ManageTodosView();
+          new ArenaView();
           self.undelegateEvents();
           delete self;
         },
 
         error: function(user, error) {
           self.$(".signup-form .error").html(error.message).show();
-          this.$(".signup-form button").removeAttr("disabled");
         }
       });
-
-      this.$(".signup-form button").attr("disabled", "disabled");
-
-      return false;
     },
 
     render: function() {
@@ -180,7 +221,7 @@ $(function() {
     
     <script type="text/template" id="arena-template">
       <header id="header"></header>
-      <h2>select a player to fight against</h2>
+      <h2>Select someone else to play with:</h2>
       <div class="arena">
       <ul id="player-list">
       </ul>
@@ -192,8 +233,7 @@ $(function() {
     </script>
     
     <script type="text/template" id="player-template">
-      // var player-list-html = "<% _.each(active-players-list,function(name){ %><li><button class="player-name"><%= name %></button></li><% });%>";
-      // $('#player-list').html = _.template(player-list-html, {active-players-list : active-players});
+      
       </script>
     
     <script type="text/template" id="game-template">
