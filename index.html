@@ -17,10 +17,10 @@
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 		<script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
 		
-		<!-- SCRIPT BODY -->
-		<script type="text/javascript">
+<!-- SCRIPT BODY -->
+<script type="text/javascript">
 		
-		$(function() {
+$(function() {
       
       // Set Parse alias
       Parse.$ = jQuery;
@@ -29,11 +29,115 @@
       Parse.initialize("0vOKQvmz86XkX5WdzPxYHqHE66zuWRq2YX5lsgSq",
                    "eyxUypnIPa2Km1MC8TQ4zhywRo9T2IPWZqaVPuHo");
                    
+      var AppState = Parse.Object.extend("AppState", {
+    		defaults: {
+    		}
+        });
       
-                  
-    });
+      // the view for the arena
+      var ArenaView = Parse.View.extend({
+      	events: {
+      	}
+      	el: '.content',
+      	initialize: function() {
+      		this.render();
+      	}
+      	render: function() {
+		this.$el.html(_.template($("#arena-template").html()));
+      		this.delegateEvents();
+      	}
+      })
+      
+      // the view for the login form  
+      var LogInView = Parse.View.extend({
+    events: {
+      "submit form.login-form": "logIn",
+      "submit form.signup-form": "signUp"
+    },
+
+    el: ".content",
+    
+    initialize: function() {
+      _.bindAll(this, "logIn", "signUp");
+      this.render();
+    },
+
+    logIn: function(e) {
+      var self = this;
+      var username = this.$("#login-username").val();
+      var password = this.$("#login-password").val();
+      
+      Parse.User.logIn(username, password, {
+        success: function(user) {
+          new ArenaView();
+          self.undelegateEvents();
+          delete self;
+        },
+
+        error: function(user, error) {
+          self.$(".login-form .error").html("Invalid username or password. Please try again.").show();
+          this.$(".login-form button").removeAttr("disabled");
+        }
+      });
+
+      this.$(".login-form button").attr("disabled", "disabled");
+
+      return false;
+    },
+
+    signUp: function(e) {
+      var self = this;
+      var username = this.$("#signup-username").val();
+      var password = this.$("#signup-password").val();
+      
+      Parse.User.signUp(username, password, { ACL: new Parse.ACL() }, {
+        success: function(user) {
+          new ManageTodosView();
+          self.undelegateEvents();
+          delete self;
+        },
+
+        error: function(user, error) {
+          self.$(".signup-form .error").html(error.message).show();
+          this.$(".signup-form button").removeAttr("disabled");
+        }
+      });
+
+      this.$(".signup-form button").attr("disabled", "disabled");
+
+      return false;
+    },
+
+    render: function() {
+      this.$el.html(_.template($("#login-template").html()));
+      this.delegateEvents();
+    }
+  });
+        
+        
+      // The main view for the app
+      var AppView = Parse.View.extend({
+      	el: $("#rpsapp"),
+      	
+      	initialize : function() {
+      		this.render();
+      	},
+      	
+      	render: () {
+      		if (Parse.User.current()) {
+      			new ArenaView();
+      		} else {
+      			new LoginView();	
+      		} 
+      	}
+      });
+      
+      new AppView();
+});
                    
-		</script>
+      
+                   
+</script>
 		
 		
 </head>
@@ -44,7 +148,7 @@
 
   <div id="rpsapp">
     <div class="title">
-      <h1 id="titletext">Rock Paper Scissors</h1>
+      <h1>Rock Paper Scissors</h1>
     </div>
 
     <div class="content">
@@ -53,5 +157,50 @@
   
   <!-- Templates -->
 
+  <script type="text/template" id="login-template">
+      <header id="header"></header>
+      <div class="login">
+        <form class="login-form">
+          <h2>Log In</h2>
+          <div class="error" style="display:none"></div>
+          <input type="text" id="login-username" placeholder="Username" />
+          <input type="password" id="login-password" placeholder="Password" />
+          <button>Log In</button>
+        </form>
+
+        <form class="signup-form">
+          <h2>Sign Up</h2>
+          <div class="error" style="display:none"></div>
+          <input type="text" id="signup-username" placeholder="Username" />
+          <input type="password" id="signup-password" placeholder="Create a Password" />
+          <button>Sign Up</button>
+        </form>
+      </div>
+    </script>
+    
+    <script type="text/template" id="arena-template">
+      <header id="header"></header>
+      <h2>select a player to fight against</h2>
+      <div class="arena">
+      <ul id="player-list">
+      </ul>
+      </div>
+      </div>
+      <div id="user-info">
+        Signed in as <%= Parse.User.current().get("username") %> (<a href="#" class="log-out">Log out</a>)
+      </div>
+    </script>
+    
+    <script type="text/template" id="player-template">
+      // var player-list-html = "<% _.each(active-players-list,function(name){ %><li><button class="player-name"><%= name %></button></li><% });%>";
+      // $('#player-list').html = _.template(player-list-html, {active-players-list : active-players});
+      </script>
+    
+    <script type="text/template" id="game-template">
+      <header id="header"></header>
+      <div class="game">
+      </div>
+    </script>
+    
 </body>
 </html>
