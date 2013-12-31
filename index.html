@@ -51,7 +51,7 @@ $(function() {
 			if (targ.nodeType == 3) // defeat Safari bug
 				targ = targ.parentNode;
 			alert(targ.html);
-		}
+		},
 		
 		getActivePlayers: function() {
 			var query = new Parse.Query(Parse.User);
