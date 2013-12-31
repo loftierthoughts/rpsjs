@@ -32,15 +32,26 @@ $(function() {
       // the view for the arena
       var ArenaView = Parse.View.extend({
       	events: {
-			'click a.log-out' : 'logOut'
+			'click a.log-out' : 'logOut',
+			'click button.player-name' : 'startMatch'
       	},
       	
 		el: '.content',
       	
 		initialize: function() {
-			_.bindAll(this, 'logOut','getActivePlayers');
-      		this.render();
+			_.bindAll(this, 'logOut','getActivePlayers','startMatch');
+      			this.render();
       	},
+		
+		startMatch: function doSomething(e) {
+			var targ;
+			if (!e) var e = window.event;
+			if (e.target) targ = e.target;
+			else if (e.srcElement) targ = e.srcElement;
+			if (targ.nodeType == 3) // defeat Safari bug
+				targ = targ.parentNode;
+			alert(targ.html);
+		}
 		
 		getActivePlayers: function() {
 			var query = new Parse.Query(Parse.User);
@@ -91,9 +102,9 @@ $(function() {
 			
 			this.$el.html(_.template($('#arena-template').html()));
       		
-			this.delegateEvents();
-			
 			this.getActivePlayers();
+			
+			this.delegateEvents();
       	}
       })
       
@@ -199,7 +210,6 @@ $(function() {
   <!-- Templates -->
 
   <script type="text/template" id="login-template">
-      <header id="header"></header>
       <div class="login">
         <form class="login-form">
           <h2>Log In</h2>
@@ -220,7 +230,6 @@ $(function() {
     </script>
     
     <script type="text/template" id="arena-template">
-      <header id="header"></header>
       <h2>Select someone else to play with:</h2>
       <div class="arena">
       <ul id="player-list">
@@ -232,13 +241,9 @@ $(function() {
       </div>
     </script>
     
-    <script type="text/template" id="player-template">
-      
-      </script>
-    
     <script type="text/template" id="game-template">
-      <header id="header"></header>
       <div class="game">
+      
       </div>
     </script>
     
