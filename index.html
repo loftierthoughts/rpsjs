@@ -32,7 +32,7 @@ $(function() {
       // the view for a match
       var MatchView = Parse.View.extend({
       	events: {
-			'click button.go-back' : 'goBack',
+			'click button.go-back' : 'goBack'
       	},
       	
       	el: $("#content"),
@@ -41,12 +41,61 @@ $(function() {
       		_.bindAll(this, 'goBack');
       		this.render();
       	},
+		
+		goBack :function() {
+      		var userStateQuery = new Parse.Query('Match');
+      		userStateQuery.equalTo('challenger',Parse.User.current());
+      		userStateQuery.equalTo('active',true);
+			userStateQuery.find({
+				success:function(results){
+					results[0].set('active',false);
+      		
+					new ArenaView();
+			
+					this.undelegateEvents();
+					delete this;
+					},
+				error:function(error){alert(error.message);}
+				});
+			
+			userStateQuery = new Parse.Query('Match');
+      		userStateQuery.equalTo('challenged',Parse.User.current());
+      		userStateQuery.equalTo('active',true);
+			userStateQuery.find({
+				success:function(results){
+					results[0].set('active',false);
+      		
+					new ArenaView();
+			
+					this.undelegateEvents();
+					delete this;
+					},
+				error:function(error){alert(error.message);}
+				});
+			},
       	
       	render: function() {
       		var userStateQuery = new Parse.Query('Match');
       		userStateQuery.equalTo('challenger',Parse.User.current());
       		userStateQuery.equalTo('active',true);
-      		this.$el.html(_.template($("#match-template").html(),{challengerOrChallenger:userState}));
+			userStateQuery.find({
+				success:function(results){
+					var userState = "challenger";
+					this.$el.html(_.template($("#match-template").html(),{challengerOrChallenger:userState}));
+					},
+				error:function(error){alert(error.message);}
+				});
+			
+			userStateQuery = new Parse.Query('Match');
+      		userStateQuery.equalTo('challenged',Parse.User.current());
+      		userStateQuery.equalTo('active',true);
+			userStateQuery.find({
+				success:function(results){
+					var userState = "challenged";
+					this.$el.html(_.template($("#match-template").html(),{challengerOrChallenger:userState}));
+					},
+				error:function(error){alert(error.message);}
+				});
       	}
       });
       
@@ -74,29 +123,28 @@ $(function() {
 			if (targ.nodeType == 3) // defeat Safari bug
 				targ = targ.parentNode;
 			
-			var Match = Parse.Object.extend('Match');
-			var newMatch = new Match();
-			newMatch.set('challenger',Parse.User.current());
-			newMatch.save();
 			
 			var query = new Parse.Query(Parse.User);
 			query.equalTo('username',targ.innerHTML);
 			query.find({
 				success:function(results){
+					var Match = Parse.Object.extend('Match');
+					
+					var newMatch = new Match();
+					newMatch.set('challenger',Parse.User.current());
 					newMatch.set('challenged',results[0]);
+					newMatch.set('active',true);
 					newMatch.save();
+					
 					console.log(newMatch.get('challenger').get('username') + " has challenged " + newMatch.get('challenged').get('username') + " to a game of rock, paper, scissors");
+          			
+					new MatchView();
+          			self.undelegateEvents();
+          			delete self;
 				}, error: function(error){
 					alert(error.message);
 				}
 				});
-				
-			newMatch.set('active',true);
-			newMatch.save();
-			
-          		new MatchView();
-          		self.undelegateEvents();
-          		delete self;
 		},
 		
 		getActivePlayers: function() {
@@ -304,8 +352,8 @@ $(function() {
       		</ul>
       	</div>
       </div>
-      <div id="user-info">
-        Signed in as <%= Parse.User.current().get("username") %> (<a href="#" class="log-out">Log out</a>)
+      <div id="go-back-container">
+        <button id="go-back">Go Back</div>
       </div>
     </script>
     
