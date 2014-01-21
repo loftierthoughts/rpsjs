@@ -35,7 +35,7 @@ $(function() {
 			'click button.go-back' : 'goBack'
       	},
       	
-      	el: $("#content"),
+      	el: $(".content"),
       	
       	initialize : function() {
       		_.bindAll(this, 'goBack');
@@ -81,7 +81,9 @@ $(function() {
 			userStateQuery.find({
 				success:function(results){
 					var userState = "challenger";
-					this.$el.html(_.template($("#match-template").html(),{challengerOrChallenger:userState}));
+					var matchTemplate = _.template($("#match-template").html());
+					matchTemplate({challengerOrChallenged:userState});
+					this.$el.html(matchTemplate.html());
 					},
 				error:function(error){alert(error.message);}
 				});
@@ -92,7 +94,9 @@ $(function() {
 			userStateQuery.find({
 				success:function(results){
 					var userState = "challenged";
-					this.$el.html(_.template($("#match-template").html(),{challengerOrChallenger:userState}));
+					var matchTemplate = _.template($("#match-template").html());
+					matchTemplate({challengerOrChallenged:userState});
+					this.$el.html(matchTemplate);
 					},
 				error:function(error){alert(error.message);}
 				});
@@ -343,7 +347,7 @@ $(function() {
     
     <script type="text/template" id="match-template">
       <div class="match">
-      	<div class="player-in-game" id="<%= challengerOrOhallenged %>">
+      	<div class="player-in-game" id="<%= challengerOrChallenged %>">
       		<header id="<%= challengerOrChallenged %>-name"><%= challengerOrChallenged %></header>
       		<ul>
       			<li><button class="attack" id="<%= challengerOrChallenged %>-rock">Rock</button></li>
